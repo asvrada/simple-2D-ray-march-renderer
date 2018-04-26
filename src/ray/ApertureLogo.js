@@ -1,4 +1,4 @@
-import {triangleSDF, circleSDF, intersectOp, unionOpArr} from "./SDF";
+import {triangleSDF, circleSDF, intersectOp, unionOpArr, subtractOp, Result, unionOp} from "./SDF";
 
 import {TWO_PI} from "./Consts";
 
@@ -32,7 +32,7 @@ function rotate(x, y, degree) {
     return {
         x: xRet,
         y: yRet
-    }
+    };
 }
 
 function triangleAtPos(num) {
@@ -48,7 +48,7 @@ function triangleAtPos(num) {
     let c = rotate(cx, cy, 45 * num);
 
     return (x, y) => {
-        return {sd: triangleSDF(x, y, a.x, a.y, b.x, b.y, c.x, c.y) + dShrink, emissive: 2};
+        return new Result(triangleSDF(x, y, a.x, a.y, b.x, b.y, c.x, c.y) + dShrink, 0, 0.9);
     };
 }
 
@@ -56,7 +56,7 @@ function triangleAtPos(num) {
  * Return a scene
  * @param x {number}
  * @param y {number}
- * @returns {{sd, emissive}}
+ * @returns {Result}
  * @constructor
  */
 export default function ApertureLogoScene(x, y) {
@@ -66,7 +66,18 @@ export default function ApertureLogoScene(x, y) {
         arrTriangles.push(triangleAtPos(i)(x, y));
     }
 
-    const circle = {sd : circleSDF(x, y, 0, 0, rCirclr), emissive: 2};
+    // 用于交集的圆
+    const circleIntersct = new Result(circleSDF(x, y, 0, 0, rCirclr), 0, 0.9);
 
-    return intersectOp(unionOpArr(arrTriangles), circle);
+    // Light sources
+    const lightSourceInner = new Result(circleSDF(x, y, 0, 0, rRect / 10), 5);
+    const lightSourceOutter = subtractOp(
+        new Result(circleSDF(x, y, 0, 0, 1), 5),
+        new Result(circleSDF(x, y, 0, 0, 1 - 0.01), 5)
+    );
+    const lightSource = unionOp(lightSourceInner, lightSourceOutter);
+
+    const apertureLogo = intersectOp(unionOpArr(arrTriangles), circleIntersct);
+
+    return unionOp(apertureLogo, lightSource);
 }

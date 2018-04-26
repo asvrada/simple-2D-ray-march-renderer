@@ -59,8 +59,8 @@ function boxSDF(x, y, cx, cy, theta, sx, sy) {
 
 /**
  * Union Operation on an array of objects
- * @param arr {[{sd, emissive}]}
- * @returns {{sd, emissive}}
+ * @param arr {[{Result}]}
+ * @returns {Result}
  */
 function unionOpArr(arr) {
     return arr.reduce((acc, cur) => unionOp(acc, cur));
@@ -68,9 +68,9 @@ function unionOpArr(arr) {
 
 /**
  * 并集
- * @param a {{sd, emissive}}
- * @param b {{sd, emissive}}
- * @returns {{sd, emissive}}
+ * @param a {Result}
+ * @param b {Result}
+ * @returns {Result}
  */
 function unionOp(a, b) {
     return a.sd < b.sd ? a : b;
@@ -78,9 +78,9 @@ function unionOp(a, b) {
 
 /**
  * 交集
- * @param a {{sd, emissive}}
- * @param b {{sd, emissive}}
- * @returns {{sd, emissive}}
+ * @param a {Result}
+ * @param b {Result}
+ * @returns {Result}
  */
 function intersectOp(a, b) {
     let r = a.sd > b.sd ? b : a;
@@ -90,14 +90,23 @@ function intersectOp(a, b) {
 
 /**
  * 减去
- * @param a {{sd, emissive}}
- * @param b {{sd, emissive}}
- * @returns {{sd, emissive}}
+ * @param a {Result}
+ * @param b {Result}
+ * @returns {Result}
  */
 function subtractOp(a, b) {
     let r = a;
     r.sd = (a.sd > -b.sd) ? a.sd : -b.sd;
     return r;
+}
+
+class Result {
+    constructor(sd = 0, emissive = 0, reflectivity = 0, eta = 0) {
+        this.sd = sd;
+        this.emissive = emissive;
+        this.reflectivity = reflectivity;
+        this.eta = eta;
+    }
 }
 
 export {
@@ -110,5 +119,6 @@ export {
     unionOp,
     unionOpArr,
     intersectOp,
-    subtractOp
+    subtractOp,
+    Result
 };

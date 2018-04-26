@@ -1,5 +1,5 @@
-import {TWO_PI} from "./Consts";
-// import {circleSDF, segmentSDF, capsuleSDF, planeSDF, unionOp, intersectOp, subtractOp} from "./SDF";
+import {TWO_PI, MAX_DEPTH, BIAS} from "./Consts";
+import {circleSDF, segmentSDF, capsuleSDF, boxSDF, unionOp, intersectOp, subtractOp, Result} from "./SDF";
 import ApertureLogo from "./ApertureLogo";
 
 export class App {
@@ -68,43 +68,76 @@ export class App {
      * Scene
      * @param x {number}
      * @param y {number}
-     * @returns {{sd: number, emissive: number}}
+     * @returns {Result}
      */
     scene(x, y) {
-        // return {sd: circleSDF(x, y, 0, 0, 0.10), emissive: 2};
-
         return ApertureLogo(x, y);
-        // let c = {sd: capsuleSDF(x, y, 0.4, 0.4, 0.6, 0.6, 0.1), emissive: 1};
-        // return c;
 
-        // let a = {sd: circleSDF(x, y, 0.4, 0.5, 0.2), emissive: 1};
-        // let b = {sd: circleSDF(x, y, 0.6, 0.5, 0.2), emissive: 0.8};
-
-        // return unionOp(a, b);
-        // return intersectOp(a, b);
-        // return subtractOp(a, b);
-        // return subtractOp(b, a);
-
-        // let r1 = {sd: circleSDF(x, y, 0.3, 0.3, 0.10), emissive: 2};
-        // let r2 = {sd: circleSDF(x, y, 0.3, 0.7, 0.05), emissive: 0.8};
-        // let r3 = {sd: circleSDF(x, y, 0.7, 0.5, 0.10), emissive: 0};
-        //
-        // return unionOp(unionOp(r1, r2), r3);
+        // 4 反射场景
+        // let a = new Result(circleSDF(x, y, 0.1, 0.3, 0.1), 2.0, 0.0);
+        // let b = new Result(circleSDF(x, y, 0, -0.25, 0.25), 0.0, 0.9);
+        // let c = new Result(circleSDF(x, y, 0, -0.1, 0.2), 0.0, 0.9);
+        // return unionOp(subtractOp(b, c), a);
     }
 
     // 光线步进
-    trace(ox, oy, dx, dy) {
+    trace(ox, oy, dx, dy, depth = 0) {
         let t = 0;
         for (let i = 0; i < this.config.MAX_STEP && t < this.config.MAX_DISTANCE; i++) {
-            let r = this.scene(ox + dx * t, oy + dy * t);
+            const x = ox + dx * t;
+            const y = oy + dy * t;
+            let r = this.scene(x, y);
 
             if (r.sd < this.config.EPSILON) {
-                return r.emissive;
+                let sum = r.emissive;
+                if (depth < MAX_DEPTH && r.reflectivity > 0.0) {
+                    let nx, ny, rx, ry, ret;
+                    ret = this.gradient(x, y);
+                    nx = ret.nx;
+                    ny = ret.ny;
+                    ret = this.reflect(dx, dy, nx, ny);
+                    rx = ret.rx;
+                    ry = ret.ry;
+
+                    sum += r.reflectivity * this.trace(x + nx * BIAS, y + ny * BIAS, rx, ry, depth + 1);
+                }
+                return sum;
             }
 
             t += r.sd;
         }
 
         return 0;
+    }
+
+    // 求反射法线
+    reflect(ix, iy, nx, ny) {
+        let idotn2 = (ix * nx + iy * ny) * 2.0;
+        let rx = ix - idotn2 * nx;
+        let ry = iy - idotn2 * ny;
+        return {rx, ry};
+    }
+
+    // 求梯度
+    gradient(x, y,) {
+        let nx = (this.scene(x + this.config.EPSILON, y).sd - this.scene(x - this.config.EPSILON, y).sd) * (0.5 / this.config.EPSILON);
+        let ny = (this.scene(x, y + this.config.EPSILON).sd - this.scene(x, y - this.config.EPSILON).sd) * (0.5 / this.config.EPSILON);
+        return {nx, ny};
+    }
+
+    // 求折射
+    refract(ix, iy, nx, ny, eta, rxry) {
+        let idotn = ix * nx + iy * ny;
+        let k = 1.0 - eta * eta * (1.0 - idotn * idotn);
+        if (k < 0.0) {
+            // 全内反射
+            return 0;
+        }
+
+        let a = eta * idotn + Math.sqrt(k);
+        rxry.rx = eta * ix - a * nx;
+        rxry.ry = eta * iy - a * ny;
+
+        return 1;
     }
 }
