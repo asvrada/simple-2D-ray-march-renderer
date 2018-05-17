@@ -48,7 +48,8 @@ function triangleAtPos(num) {
     let c = rotate(cx, cy, 45 * num);
 
     return (x, y) => {
-        return new Result(triangleSDF(x, y, a.x, a.y, b.x, b.y, c.x, c.y) + dShrink, 0, 0.9);
+        return new Result(triangleSDF(x, y, a.x, a.y, b.x, b.y, c.x, c.y) + dShrink, 0, 0.2, 1.5);
+        // return new Result(triangleSDF(x, y, a.x, a.y, b.x, b.y, c.x, c.y) + dShrink, 2);
     };
 }
 
@@ -67,17 +68,20 @@ export default function ApertureLogoScene(x, y) {
     }
 
     // 用于交集的圆
-    const circleIntersct = new Result(circleSDF(x, y, 0, 0, rCirclr), 0, 0.9);
-
-    // Light sources
-    const lightSourceInner = new Result(circleSDF(x, y, 0, 0, rRect / 10), 5);
-    const lightSourceOutter = subtractOp(
-        new Result(circleSDF(x, y, 0, 0, 1), 5),
-        new Result(circleSDF(x, y, 0, 0, 1 - 0.01), 5)
-    );
-    const lightSource = unionOp(lightSourceInner, lightSourceOutter);
+    // const circleIntersct = new Result(circleSDF(x, y, 0, 0, rCirclr), 2);
+    const circleIntersct = new Result(circleSDF(x, y, 0, 0, rCirclr), 0, 0.2, 1.5);
 
     const apertureLogo = intersectOp(unionOpArr(arrTriangles), circleIntersct);
 
-    return unionOp(apertureLogo, lightSource);
+    // return apertureLogo;
+
+    // Light sources
+    const lightSource = [
+        new Result(circleSDF(x, y, -0.5, -0.5, 0.1), 5),
+        new Result(circleSDF(x, y, 0.5, -0.5, 0.1), 5),
+        new Result(circleSDF(x, y, -0.5, 0.5, 0.1), 5),
+        new Result(circleSDF(x, y, 0.5, 0.5, 0.1), 5)
+    ];
+
+    return unionOp(apertureLogo, unionOpArr(lightSource));
 }

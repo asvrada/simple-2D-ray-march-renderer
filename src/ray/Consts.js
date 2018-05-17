@@ -1,7 +1,7 @@
 // Actual Constant that we will never change
 const TWO_PI = 6.28318530718;
 const BIAS = 1e-4;
-const MAX_DISTANCE = 2;
+const MAX_DISTANCE = 5;
 const EPSILON = 1e-6;
 
 const N = 16;

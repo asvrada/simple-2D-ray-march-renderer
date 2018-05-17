@@ -63,7 +63,7 @@
                         this.input_MAX_STEP = 32;
                         break;
                     case 3:
-                        this.input_N = 64;
+                        this.input_N = 256;
                         this.input_MAX_STEP = 64;
                         break;
                     default:

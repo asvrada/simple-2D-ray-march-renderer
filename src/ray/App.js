@@ -59,7 +59,7 @@ export class App {
         for (let i = 0; i < this.config.N; i++) {
             // let a = TWO_PI * Math.random();
             let a = TWO_PI * (i + (Math.random() - 0.5) * 2) / this.config.N;
-            sum += this.trace(x, y, Math.cos(a), Math.sin(a));
+            sum += this.trace(x, y, Math.cos(a), Math.sin(a), 0);
         }
         return sum / this.config.N;
     }
@@ -73,6 +73,11 @@ export class App {
     scene(x, y) {
         return ApertureLogo(x, y);
 
+        // 5 折射场景
+        // let light = new Result(circleSDF(x, y, -0.5, 0.5, 0.1), 5);
+        // let rect = new Result(boxSDF(x, y, 0, 0, 1, 0.2, 0.2), 0, 0.2, 1.5);
+        // return unionOp(light, rect);
+
         // 4 反射场景
         // let a = new Result(circleSDF(x, y, 0.1, 0.3, 0.1), 2.0, 0.0);
         // let b = new Result(circleSDF(x, y, 0, -0.25, 0.25), 0.0, 0.9);
@@ -82,61 +87,77 @@ export class App {
 
     // 光线步进
     trace(ox, oy, dx, dy, depth = 0) {
-        let t = 0;
+        let t = 1e-3;
+        // 内/外？
+        const sign = this.scene(ox, oy).sd > 0 ? 1 : -1;
         for (let i = 0; i < this.config.MAX_STEP && t < this.config.MAX_DISTANCE; i++) {
             const x = ox + dx * t;
             const y = oy + dy * t;
-            let r = this.scene(x, y);
+            let ret = this.scene(x, y);
 
-            if (r.sd < this.config.EPSILON) {
-                let sum = r.emissive;
-                if (depth < MAX_DEPTH && r.reflectivity > 0.0) {
-                    let nx, ny, rx, ry, ret;
-                    ret = this.gradient(x, y);
-                    nx = ret.nx;
-                    ny = ret.ny;
-                    ret = this.reflect(dx, dy, nx, ny);
-                    rx = ret.rx;
-                    ry = ret.ry;
+            if ((ret.sd * sign) < this.config.EPSILON) {
+                let sum = ret.emissive;
 
-                    sum += r.reflectivity * this.trace(x + nx * BIAS, y + ny * BIAS, rx, ry, depth + 1);
+                if (depth < MAX_DEPTH && (ret.reflectivity > 0 || ret.eta > 0)) {
+                    let refl = ret.reflectivity;
+
+                    // 法线
+                    let n = {x: null, y: null};
+                    // 折射
+                    let r = {x: null, y: null};
+
+                    this.gradient(x, y, n);
+                    n.x *= sign;
+                    n.y *= sign;
+
+                    if (ret.eta > 0) {
+                        if (this.refract(dx, dy, n.x, n.y, sign < 0.0 ? ret.eta : 1.0 / ret.eta, r)) {
+                            sum += (1.0 - refl) * this.trace(x - n.x * BIAS, y - n.y * BIAS, r.x, r.y, depth + 1);
+                        } else {
+                            // 全内反射
+                            refl = 1;
+                        }
+                    }
+
+                    if (refl > 0) {
+                        this.reflect(dx, dy, n.x, n.y, r);
+                        sum += refl * this.trace(x + n.x * BIAS, y + n.y * BIAS, r.x, r.y, depth + 1);
+                    }
                 }
                 return sum;
             }
 
-            t += r.sd;
+            t += ret.sd * sign;
         }
 
         return 0;
     }
 
     // 求反射法线
-    reflect(ix, iy, nx, ny) {
+    reflect(ix, iy, nx, ny, r) {
         let idotn2 = (ix * nx + iy * ny) * 2.0;
-        let rx = ix - idotn2 * nx;
-        let ry = iy - idotn2 * ny;
-        return {rx, ry};
+        r.x = ix - idotn2 * nx;
+        r.y = iy - idotn2 * ny;
     }
 
     // 求梯度
-    gradient(x, y,) {
-        let nx = (this.scene(x + this.config.EPSILON, y).sd - this.scene(x - this.config.EPSILON, y).sd) * (0.5 / this.config.EPSILON);
-        let ny = (this.scene(x, y + this.config.EPSILON).sd - this.scene(x, y - this.config.EPSILON).sd) * (0.5 / this.config.EPSILON);
-        return {nx, ny};
+    gradient(x, y, n) {
+        n.x = (this.scene(x + this.config.EPSILON, y).sd - this.scene(x - this.config.EPSILON, y).sd) * (0.5 / this.config.EPSILON);
+        n.y = (this.scene(x, y + this.config.EPSILON).sd - this.scene(x, y - this.config.EPSILON).sd) * (0.5 / this.config.EPSILON);
     }
 
     // 求折射
-    refract(ix, iy, nx, ny, eta, rxry) {
+    refract(ix, iy, nx, ny, eta, r) {
         let idotn = ix * nx + iy * ny;
         let k = 1.0 - eta * eta * (1.0 - idotn * idotn);
-        if (k < 0.0) {
+        if (k < 0) {
             // 全内反射
             return 0;
         }
 
         let a = eta * idotn + Math.sqrt(k);
-        rxry.rx = eta * ix - a * nx;
-        rxry.ry = eta * iy - a * ny;
+        r.x = eta * ix - a * nx;
+        r.y = eta * iy - a * ny;
 
         return 1;
     }
