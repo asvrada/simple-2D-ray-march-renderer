@@ -2,25 +2,25 @@
     <div>
         <div id="control">
             <div>
-                <p>预设配置</p>
-                <button @click="preset(0)">快</button>
-                <button @click="preset(1)">中</button>
-                <button @click="preset(2)">慢</button>
-                <button @click="preset(3)">最慢</button>
+                <p>Preset, the quicker, the lower the quality</p>
+                <button @click="preset(0)">Fast</button>
+                <button @click="preset(1)">Normal</button>
+                <button @click="preset(2)">Slow</button>
+                <button @click="preset(3)">Slowest</button>
 
-                <p>画布分辨率，推荐512及以下</p>
-                <input type="number" placeholder="分辨率" v-model="input_resolution">
-                <p>采样数，越高越清晰，渲染也越慢，推荐32</p>
-                <input type="number" placeholder="采样数" v-model="input_N">
-                <p>光线步进次数，由于场景特殊性，建议8以下</p>
-                <input type="number" placeholder="光线步进次数" v-model="input_MAX_STEP">
+                <p>Resolution of canvas. Recommend < 512 x 512</p>
+                <input type="number" placeholder="Resolution" v-model="input_resolution">
+                <p>Sample Count Per Pixel.Recommend 32</p>
+                <input type="number" placeholder="Sample Count" v-model="input_N">
+                <p>Ray March Iteration. Recommend < 8</p>
+                <input type="number" placeholder="Ray March Iteration" v-model="input_MAX_STEP">
             </div>
 
             <div>
                 <button v-on:click="draw" v-show="showBtn">Draw</button>
                 <button v-on:click="abort" v-show="!aborted">Abort</button>
             </div>
-            <p>若要重新绘制，请刷新浏览器</p>
+            <p>To clean the canvas, please refresh this page</p>
         </div>
 
         <div id="canvas">
@@ -34,7 +34,7 @@
     import {MAX_DISTANCE, EPSILON, N, MAX_STEP, WIDTH, HEIGHT} from '../ray/Consts';
 
     export default {
-        name: "JeffCanvas",
+        name: "RayCanvas",
         data() {
             return {
                 instance: null,

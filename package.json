@@ -1,22 +1,19 @@
 {
-  "name": "ray",
+  "name": "ray-marching",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve --open",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint",
-    "push": "node push-to-gh-page.js"
+    "lint": "vue-cli-service lint"
   },
   "dependencies": {
-    "vue": "^2.5.13"
+    "vue": "^2.6.10"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.0.0-beta.6",
     "@vue/cli-plugin-eslint": "^3.0.0-beta.6",
     "@vue/cli-service": "^3.0.0-beta.6",
-    "fs-extra": "^5.0.0",
-    "gh-pages": "^1.1.0",
     "vue-template-compiler": "^2.5.13"
   },
   "babel": {

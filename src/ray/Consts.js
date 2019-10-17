@@ -4,10 +4,10 @@ const BIAS = 1e-4;
 const MAX_DISTANCE = 5;
 const EPSILON = 1e-6;
 
-const N = 16;
-const MAX_STEP = 16;
+const N = 8;
+const MAX_STEP = 8;
 // 递归求反射/折射深度
-const MAX_DEPTH = 3;
+const MAX_DEPTH = 2;
 
 const WIDTH = 256;
 const HEIGHT = 256;
