@@ -1,23 +1,23 @@
 // 圆盘的 SDF(带符号距离场)
 function circleSDF(x, y, cx, cy, r) {
-    let ux = x - cx;
-    let uy = y - cy;
-    return Math.sqrt(ux * ux + uy * uy) - r;
+  let ux = x - cx;
+  let uy = y - cy;
+  return Math.sqrt(ux * ux + uy * uy) - r;
 }
 
 function segmentSDF(x, y, ax, ay, bx, by) {
-    let vx = x - ax, vy = y - ay, ux = bx - ax, uy = by - ay;
-    let t = Math.max(Math.min((vx * ux + vy * uy) / (ux * ux + uy * uy), 1.0), 0.0);
-    let dx = vx - ux * t, dy = vy - uy * t;
-    return Math.sqrt(dx * dx + dy * dy);
+  let vx = x - ax, vy = y - ay, ux = bx - ax, uy = by - ay;
+  let t = Math.max(Math.min((vx * ux + vy * uy) / (ux * ux + uy * uy), 1.0), 0.0);
+  let dx = vx - ux * t, dy = vy - uy * t;
+  return Math.sqrt(dx * dx + dy * dy);
 }
 
 function capsuleSDF(x, y, ax, ay, bx, by, r) {
-    return segmentSDF(x, y, ax, ay, bx, by) - r;
+  return segmentSDF(x, y, ax, ay, bx, by) - r;
 }
 
 function planeSDF(x, y, px, py, nx, ny) {
-    return (x - px) * nx + (y - py) * ny;
+  return (x - px) * nx + (y - py) * ny;
 }
 
 /**
@@ -33,24 +33,24 @@ function planeSDF(x, y, px, py, nx, ny) {
  * @returns {number}
  */
 function triangleSDF(x, y, ax, ay, bx, by, cx, cy) {
-    let d = Math.min(Math.min(
-        segmentSDF(x, y, ax, ay, bx, by),
-        segmentSDF(x, y, bx, by, cx, cy)),
-        segmentSDF(x, y, cx, cy, ax, ay));
-    return (bx - ax) * (y - ay) > (by - ay) * (x - ax) &&
-    (cx - bx) * (y - by) > (cy - by) * (x - bx) &&
-    (ax - cx) * (y - cy) > (ay - cy) * (x - cx) ? -d : d;
+  let d = Math.min(Math.min(
+    segmentSDF(x, y, ax, ay, bx, by),
+    segmentSDF(x, y, bx, by, cx, cy)),
+    segmentSDF(x, y, cx, cy, ax, ay));
+  return (bx - ax) * (y - ay) > (by - ay) * (x - ax) &&
+  (cx - bx) * (y - by) > (cy - by) * (x - bx) &&
+  (ax - cx) * (y - cy) > (ay - cy) * (x - cx) ? -d : d;
 }
 
 // 矩形
 function boxSDF(x, y, cx, cy, theta, sx, sy) {
-    let costheta = Math.cos(theta);
-    let sintheta = Math.sin(theta);
-    let dx = Math.abs((x - cx) * costheta + (y - cy) * sintheta) - sx;
-    let dy = Math.abs((y - cy) * costheta - (x - cx) * sintheta) - sy;
-    let ax = Math.max(dx, 0.0);
-    let ay = Math.max(dy, 0.0);
-    return Math.min(Math.max(dx, dy), 0.0) + Math.sqrt(ax * ax + ay * ay);
+  let costheta = Math.cos(theta);
+  let sintheta = Math.sin(theta);
+  let dx = Math.abs((x - cx) * costheta + (y - cy) * sintheta) - sx;
+  let dy = Math.abs((y - cy) * costheta - (x - cx) * sintheta) - sy;
+  let ax = Math.max(dx, 0.0);
+  let ay = Math.max(dy, 0.0);
+  return Math.min(Math.max(dx, dy), 0.0) + Math.sqrt(ax * ax + ay * ay);
 }
 
 ////////////
@@ -63,7 +63,7 @@ function boxSDF(x, y, cx, cy, theta, sx, sy) {
  * @returns {Result}
  */
 function unionOpArr(arr) {
-    return arr.reduce((acc, cur) => unionOp(acc, cur));
+  return arr.reduce((acc, cur) => unionOp(acc, cur));
 }
 
 /**
@@ -73,7 +73,7 @@ function unionOpArr(arr) {
  * @returns {Result}
  */
 function unionOp(a, b) {
-    return a.sd < b.sd ? a : b;
+  return a.sd < b.sd ? a : b;
 }
 
 /**
@@ -83,9 +83,9 @@ function unionOp(a, b) {
  * @returns {Result}
  */
 function intersectOp(a, b) {
-    let r = a.sd > b.sd ? b : a;
-    r.sd = a.sd > b.sd ? a.sd : b.sd;
-    return r;
+  let r = a.sd > b.sd ? b : a;
+  r.sd = a.sd > b.sd ? a.sd : b.sd;
+  return r;
 }
 
 /**
@@ -95,30 +95,30 @@ function intersectOp(a, b) {
  * @returns {Result}
  */
 function subtractOp(a, b) {
-    let r = a;
-    r.sd = (a.sd > -b.sd) ? a.sd : -b.sd;
-    return r;
+  let r = a;
+  r.sd = (a.sd > -b.sd) ? a.sd : -b.sd;
+  return r;
 }
 
 class Result {
-    constructor(sd = 0, emissive = 0, reflectivity = 0, eta = 0) {
-        this.sd = sd;
-        this.emissive = emissive;
-        this.reflectivity = reflectivity;
-        this.eta = eta;
-    }
+  constructor(sd = 0, emissive = 0, reflectivity = 0, eta = 0) {
+    this.sd = sd;
+    this.emissive = emissive;
+    this.reflectivity = reflectivity;
+    this.eta = eta;
+  }
 }
 
 export {
-    triangleSDF,
-    boxSDF,
-    circleSDF,
-    segmentSDF,
-    capsuleSDF,
-    planeSDF,
-    unionOp,
-    unionOpArr,
-    intersectOp,
-    subtractOp,
-    Result
+  triangleSDF,
+  boxSDF,
+  circleSDF,
+  segmentSDF,
+  capsuleSDF,
+  planeSDF,
+  unionOp,
+  unionOpArr,
+  intersectOp,
+  subtractOp,
+  Result
 };

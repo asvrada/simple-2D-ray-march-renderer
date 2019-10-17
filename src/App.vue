@@ -9,14 +9,14 @@
 </template>
 
 <script>
-    import RayCanvas from './components/RayCanvas';
+  import RayCanvas from './components/RayCanvas';
 
-    export default {
-        name: 'app',
-        components: {
-          RayCanvas
-        }
-    };
+  export default {
+    name: 'app',
+    components: {
+      RayCanvas
+    }
+  };
 </script>
 
 <style>
